@@ -60,6 +60,7 @@ async function getApartamentData(apartamentsLink) {
         deviceScaleFactor: 1,
     });
   
+    
     await page.goto(apartamentsLink); 
     
     const ObtenerInitialState = page.evaluate(() => {
