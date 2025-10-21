@@ -1,101 +1,38 @@
-// guarda lo que exporta el modulo require lo  trae 
-const puppeteer = require("puppeteer");
+// MICASAYOUTUBE - INDEX.JS
+import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+dotenv.config();
 
-async function getApartamentLink(urlToParse) {
-// Configuracion inicial del navegador
-const options = {headless: false};
+const { obtenerTokenExterno } = require('./helpers/tokenConsumer');
 
-// Crea un navegador y te devuelve referencia al navegador creado
-const browser = await puppeteer.launch(options);
+async function getData(itemId) {
+  const token = await obtenerTokenExterno();
+  if (!token) return;
 
-// aca esta funcion puedo usar browser
-const page = await browser.newPage();
-// setea el viewport a la pagina
-await page.setViewport({
-      width: 1920,
-      height: 1080,
-      deviceScaleFactor: 1,
-  });
+  const url = `https://api.mercadolibre.com/items/${itemId}`;
+  const descUrl = `${url}/description`;
 
-  await page.goto(urlToParse); 
-  
-  const obtenerLinks = () => {
-        const getlink = (publicacion) => {
-          return  publicacion.getElementsByClassName(
-              "poly-component__title"
-          )[0].href;
-        };  
-      
-        const todasLasPublicaciones = document.getElementsByClassName(
-          "ui-search-layout__item"              
-        );
-                       
-        return Array.from(todasLasPublicaciones).map((publicacion) => 
-          getlink(publicacion)                   
-        );
-  };
-        
-  const ObtenerLinkPromise = page.evaluate(obtenerLinks);
-  
-  const apartamentsLink = await ObtenerLinkPromise;
+  try {
+    const [itemRes, descRes] = await Promise.all([
+      fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(descUrl, { headers: { Authorization: `Bearer ${token}` } })
+    ]);
 
-  // array de link
-  console.log(apartamentsLink);
-  guardarLinksEnBaseDeDatos(apartamentsLink);
-}
+    const item = await itemRes.json();
+    const desc = await descRes.json();
 
-async function getApartamentData(apartamentsLink) {
-  // Configuracion inicial del navegador
-  const options = {headless: false};
-  
-  // Crea un navegador y te devuelve referencia al navegador creado
-  const browser = await puppeteer.launch(options);
-  
-  // aca esta funcion puedo usar browser
-  const page = await browser.newPage();
-  // setea el viewport a la pagina
-  await page.setViewport({
-        width: 1920,
-        height: 1080,
-        deviceScaleFactor: 1,
+    console.log({
+      titulo: item.title,
+      precio: item.price,
+      moneda: item.currency_id,
+      ubicacion: item.seller_address?.city?.name,
+      descripcion: desc.plain_text,
+      imagenes: item.pictures?.map(p => p.url)
     });
-  
-    
-    await page.goto(apartamentsLink); 
-    
-    const ObtenerInitialState = page.evaluate(() => {
-      return window.__PRELOADED_STATE__.initialState;    
-    });
-    
-    const initialState = await ObtenerInitialState;
-    const apartamentData = {
-      "gastos" : { 
-        "Precio" : initialState.components.price.price.value,
-        "moneda" :  initialState.components.price.price.currency_symbol,
-        },
-      };  
-    
-    console.log(apartamentData);
-    
-    return apartamentData;
+  } catch (err) {
+    console.error('❌ Error al obtener datos:', err.message);
   }
-  
-// aca ya no puedo
-
-function getPageNumberUrl(numeroDePagina){
-  const desdeParameter = `_Desde_${48 * (numeroDePagina -1) +1}`;
-  return `https://inmuebles.mercadolibre.com.ar/departamentos/
-  alquiler${desdeParameter}_Noindex_True`;  
 }
 
-/*
-const urlToParse = 
-"https://inmuebles.mercadolibre.com.ar/departamentos/alquiler/";
+getData('MLA1413050342'); // Reemplazá con el ID que necesites
 
-getApartamentLink(urlToParse);
-*/
-
-const apartamentToParsed =
-"https://departamento.mercadolibre.com.ar/MLA-2039897396-departamento-alquiler-1-ambiente-villa-crespo-_JM#polycard_client=search-nordic&position=3&search_layout=grid&type=item&tracking_id=f41b9958-0111-4880-87d4-738c0b37c8e2";
-
-getApartamentData(apartamentToParsed);

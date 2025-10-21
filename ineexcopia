@@ -1,0 +1,123 @@
+/ MICASAYOUTUBE - INDEX.JS
+
+import puppeteer from "puppeteer";
+import fetch from "node-fetch";
+import dotenv from 'dotenv';
+dotenv.config();
+
+const { obtenerTokenExterno } = require('./helpers/tokenConsumer');
+
+// 🧠 Extrae el ID del ítem desde la URL
+function extractItemId(url) {
+  const match = url.match(/MLA-\d+/);
+  return match ? match[0].replace("-", "") : null;
+}
+
+// 📡 Consulta la API con token externo
+async function getDataFromAPI(itemId) {
+  const token = await obtenerTokenExterno();
+  if (!token) {
+    console.error("❌ No se pudo obtener el token externo.");
+    return null;
+  }
+
+  const url = `https://api.mercadolibre.com/items/${itemId}`;
+  const descriptionUrl = `${url}/description`;
+
+  try {
+    const [itemRes, descRes] = await Promise.all([
+      fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      }),
+      fetch(descriptionUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+    ]);
+
+    if (!itemRes.ok || !descRes.ok) {
+      console.error(`❌ Error en API: ${itemRes.status} / ${descRes.status}`);
+      return null;
+    }
+
+    const itemData = await itemRes.json();
+    const descData = await descRes.json();
+
+    return {
+      titulo: itemData.title ?? "Sin título",
+      precio: itemData.price ?? "Sin precio",
+      moneda: itemData.currency_id ?? "Sin moneda",
+      ubicacion: itemData.seller_address?.city?.name ?? "Sin ubicación",
+      descripcion: descData.plain_text ?? "Sin descripción",
+      imagenes: Array.isArray(itemData.pictures)
+        ? itemData.pictures.map(pic => pic.url)
+        : []
+    };
+  } catch (error) {
+    console.error("❌ Error al consultar la API:", error.message);
+    return null;
+  }
+}
+
+// 🧪 Fallback con Puppeteer si la API falla
+async function getApartamentData(apartamentLink) {
+  const itemId = extractItemId(apartamentLink);
+  if (!itemId) {
+    console.error("❌ No se pudo extraer el item ID de la URL.");
+    return;
+  }
+
+  const apiData = await getDataFromAPI(itemId);
+  if (apiData) {
+    console.log("📡 Datos desde la API:");
+    console.log(apiData);
+    return;
+  }
+
+  console.log("🔄 API falló, usando fallback desde Puppeteer...");
+
+  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  const page = await browser.newPage();
+
+  try {
+    await page.goto(apartamentLink, { waitUntil: 'networkidle2' });
+
+    await page.waitForFunction(() => {
+      return typeof window.__PRELOADED_STATE__ !== 'undefined' &&
+             Object.keys(window.__PRELOADED_STATE__).length > 0;
+    }, { timeout: 90000 });
+
+    const components = await page.evaluate(() => window.__PRELOADED_STATE__);
+    console.log("🧠 Estado global desde Puppeteer:");
+    console.log(JSON.stringify(components, null, 2));
+
+    const fallbackData = {
+      titulo: components?.item?.title ?? "Sin título",
+      precio: components?.item?.price ?? "Sin precio",
+      moneda: components?.item?.currency_id ?? "Sin moneda",
+      ubicacion: components?.item?.seller_address?.city?.name ?? "Sin ubicación",
+      descripcion: components?.item?.description ?? "Sin descripción",
+      imagenes: components?.item?.pictures?.map(pic => pic.url) ?? []
+    };
+
+    console.log("📦 Datos desde fallback:");
+    console.log(fallbackData);
+
+  } catch (error) {
+    console.error("❌ Error en Puppeteer:", error.message);
+    await page.screenshot({ path: 'error_state.png' });
+  } finally {
+    await browser.close();
+  }
+}
+
+// 🏠 URL del departamento a consultar
+const apartamentToParsed =
+  "https://departamento.mercadolibre.com.ar/MLA-1413050342-departamentos-semipisos-en-venta-a-estrenar-de-3-ambientes-en-recoleta-gran-categoria-_JM";
+
+getApartamentData(apartamentToParsed);
