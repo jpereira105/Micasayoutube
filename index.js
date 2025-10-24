@@ -9,6 +9,7 @@ dotenv.config();
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { validarTokenVisual } from './helpers/tokenVisualizer.js';
 
+async function main() {
 const token = await obtenerTokenExterno();
 if (!token) return;
 
@@ -58,6 +59,9 @@ async function getData(itemId) {
   }
 }
 
+
 getData('MLA1413050342'); // Reemplazá con el ID que necesites
 
+}
 
+main()
