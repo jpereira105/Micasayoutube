@@ -1,13 +1,34 @@
 // MICASAYOUTUBE - INDEX.JS
+// index.js
+
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const { obtenerTokenExterno } = require('./helpers/tokenConsumer');
+// const { obtenerTokenExterno } = require('./helpers/tokenConsumer');
+import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
+
+
+// 🔦 Función de semáforo visual para el token
+function validarTokenVisual(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64'));
+    const exp = new Date(payload.exp * 1000);
+    const ahora = new Date();
+    const minutosRestantes = Math.floor((exp - ahora) / 60000);
+
+    const estado = minutosRestantes < 5 ? '🔴' : minutosRestantes < 30 ? '🟡' : '🟢';
+    console.log(`${estado} Token expira en ${minutosRestantes} min`);
+  } catch (err) {
+    console.error('⚠️ No se pudo validar visualmente el token:', err.message);
+  }
+}
 
 async function getData(itemId) {
   const token = await obtenerTokenExterno();
   if (!token) return;
+
+  validarTokenVisual(token); // 👈 Acá se usa el semáforo
 
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
@@ -35,4 +56,5 @@ async function getData(itemId) {
 }
 
 getData('MLA1413050342'); // Reemplazá con el ID que necesites
+
 
