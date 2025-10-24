@@ -5,9 +5,12 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// const { obtenerTokenExterno } = require('./helpers/tokenConsumer');
+// obtener token 
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
+import { validarTokenVisual } from './helpers/tokenVisualizer.js';
 
+const token = await obtenerTokenExterno();
+if (!token) return;
 
 // 🔦 Función de semáforo visual para el token
 function validarTokenVisual(token) {
