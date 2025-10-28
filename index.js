@@ -1,19 +1,10 @@
-// MICASAYOUTUBE - INDEX.JS
-// index.js
-
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// obtener token 
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
-import { validarTokenVisual } from './helpers/tokenVisualizer.js';
+import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
 
-async function main() {
-const token = await obtenerTokenExterno();
-if (!token) return;
-
-// 🔦 Función de semáforo visual para el token
 function validarTokenVisual(token) {
   try {
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64'));
@@ -28,11 +19,8 @@ function validarTokenVisual(token) {
   }
 }
 
-async function getData(itemId) {
-  const token = await obtenerTokenExterno();
-  if (!token) return;
-
-  validarTokenVisual(token); // 👈 Acá se usa el semáforo
+async function getData(itemId, token) {
+  validarTokenVisual(token);
 
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
@@ -59,9 +47,22 @@ async function getData(itemId) {
   }
 }
 
+async function main() {
+  const estado = await verificarEstadoToken();
 
-getData('MLA1413050342'); // Reemplazá con el ID que necesites
+  if (estado === 'expirado' || estado === 'por_expirar') {
+    console.warn('🚫 Token no válido. Abortando ejecución.');
+    return;
+  }
 
+  const token = await obtenerTokenExterno();
+  if (!token) {
+    console.error('❌ No se recibió token');
+    return;
+  }
+
+  console.log('✅ Token recibido:', token);
+  await getData('MLA1413050342', token); // Reemplazá con el ID que necesites
 }
 
-main()
+main();

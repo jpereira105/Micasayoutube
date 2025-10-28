@@ -6,7 +6,13 @@ dotenv.config();
 
 export async function obtenerTokenExterno() {
   try {
-    const res = await axios.get('https://mercadolibretoken.onrender.com/api/token', {
+
+    // 🔍 Logs de trazabilidad antes del request
+    console.log('🌐 Consultando endpoint...');
+    console.log('🔗 URL:', 'https://mercadolibrotoken.onrender.com/api/token');
+    console.log('🔑 API_KEY:', process.env.API_KEY_MERCADOLIBRE);
+
+    const res = await axios.get('https://mercadolibrotoken.onrender.com/api/token', {
       headers: {
         'x-api-key': process.env.API_KEY_MERCADOLIBRE
       },
