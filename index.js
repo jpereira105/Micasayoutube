@@ -65,4 +65,12 @@ async function main() {
   await getData('MLA1413050342', token); // Reemplazá con el ID que necesites
 }
 
-main();
+main()
+  .then(() => {
+    console.log('⏹️ Worker finalizado correctamente');
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('💥 Error inesperado en el worker:', err.message);
+    process.exit(1); // Salida con código de error
+  });
