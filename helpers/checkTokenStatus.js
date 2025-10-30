@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export async function verificarEstadoToken() {
   try {
-    const res = await axios.get('https://mercadolibrotoken.onrender.com/api/token/status');
+    const res = await axios.get('https://justo-scraper.onrender.com/api/token/status');
     const { estado, tiempo_restante, usuario } = res.data;
 
     console.log(`📊 Estado del token: ${estado}`);
