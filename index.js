@@ -14,6 +14,7 @@ function validarTokenVisual(token) {
 
     const estado = minutosRestantes < 5 ? '🔴' : minutosRestantes < 30 ? '🟡' : '🟢';
     console.log(`${estado} Token expira en ${minutosRestantes} min`);
+    console.log(`👤 Usuario asociado: ${payload.user_id || 'desconocido'}`);
   } catch (err) {
     console.error('⚠️ No se pudo validar visualmente el token:', err.message);
   }
