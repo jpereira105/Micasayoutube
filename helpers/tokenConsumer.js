@@ -11,7 +11,9 @@ export async function obtenerTokenExterno() {
     console.log('🌐 Consultando endpoint...');
     console.log('🔗 URL:', 'https://justo-scraper.onrender.com/api/token',);
     console.log('🔑 API_KEY:', process.env.API_KEY_MERCADOLIBRE);
-
+    // 🔍 Validación visual antes del request
+    console.log('🔑 API_KEY usada para consumir:', process.env.API_KEY_MERCADOLIBRE);
+    
     const res = await axios.get('https://justo-scraper.onrender.com/api/token', {
       headers: {
         'x-api-key': process.env.API_KEY_MERCADOLIBRE
