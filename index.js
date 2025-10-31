@@ -7,8 +7,9 @@ import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
 
 function validarTokenVisual(token) {
-  if (typeof token !== 'string') {
-    console.error('⚠️ Token no es string:', token);
+  // ✅ Validación previa
+  if (!token || typeof token !== 'string' || token.split('.').length < 3) {
+    console.error('⚠️ Token inválido o mal formado:', token);
     return;
   }
 

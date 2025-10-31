@@ -23,6 +23,8 @@ export async function obtenerTokenExterno() {
 
     if (!res.data?.token) {
       console.error('⚠️ Token no disponible');
+      console.log('🧪 Token recibido desde endpoint:', res.data.token);
+      console.log('🧪 Tipo:', typeof res.data.token);
       return null;
     }
 
