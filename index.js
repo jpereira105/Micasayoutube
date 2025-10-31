@@ -40,7 +40,7 @@ async function main() {
   console.log('✅ Token recibido:', token);
   validarTokenVisual(token);
 
-  const itemId = 'MLA1413050342'; // tu único ID por ahora
+  const itemId = 'MLA1413050342';
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
 
@@ -66,25 +66,6 @@ async function main() {
 }
 
 
-
-async function main() {
-  const estado = await verificarEstadoToken();
-
-  if (estado === 'expirado' || estado === 'por_expirar') {
-    console.warn('🚫 Token no válido. Abortando ejecución.');
-    return;
-  }
-
-  const token = await obtenerTokenExterno();
-  if (!token) {
-    console.error('❌ No se recibió token');
-    return;
-  }
-
-  console.log('✅ Token recibido:', token);
-  await getData('MLA1413050342', token); // Reemplazá con el ID que necesites
-}
-
  main()
   .then(() => {
     console.log('⏹️ Worker finalizado, manteniendo proceso vivo');
@@ -93,4 +74,4 @@ async function main() {
   .catch((err) => {
     console.error('💥 Error inesperado en el worker:', err.message);
     setTimeout(() => {}, 1000 * 60 * 60); // también espera 1 hora en caso de error
-  });
+});
