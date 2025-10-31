@@ -5,7 +5,6 @@ dotenv.config();
 
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
-import { validarItemCompleto } from './helpers/validarItemCompleto.js';
 
 function validarTokenVisual(token) {
   try {
