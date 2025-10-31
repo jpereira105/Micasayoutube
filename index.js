@@ -7,6 +7,11 @@ import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
 
 function validarTokenVisual(token) {
+  if (typeof token !== 'string') {
+    console.error('⚠️ Token no es string:', token);
+    return;
+  }
+
   try {
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64'));
     const exp = new Date(payload.exp * 1000);
@@ -38,6 +43,7 @@ async function main() {
   }
 
   console.log('✅ Token recibido:', token);
+    
   validarTokenVisual(token);
 
   const itemId = 'MLA1413050342';
