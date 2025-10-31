@@ -7,14 +7,19 @@ import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
 
 function validarTokenVisual(token) {
-  // ✅ Validación previa
-  if (!token || typeof token !== 'string' || token.split('.').length < 3) {
-    console.error('⚠️ Token inválido o mal formado:', token);
+  if (!token || typeof token !== 'string') {
+    console.error('⚠️ Token inválido: no es string');
+    return;
+  }
+
+  const partes = token.split('.');
+  if (partes.length < 3) {
+    console.warn('⚠️ Token no tiene formato JWT. Saltando validación visual.');
     return;
   }
 
   try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64'));
+    const payload = JSON.parse(Buffer.from(partes[1], 'base64'));
     const exp = new Date(payload.exp * 1000);
     const ahora = new Date();
     const minutosRestantes = Math.floor((exp - ahora) / 60000);
@@ -53,7 +58,7 @@ async function main() {
     
   validarTokenVisual(token);
 
-  const itemId = 'MLA1413050342';
+  const itemId = 'MLA1139118232';
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
 
