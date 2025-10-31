@@ -1,9 +1,11 @@
+// index.js  micasayoutube
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
+import { validarItemCompleto } from './helpers/validarItemCompleto.js';
 
 function validarTokenVisual(token) {
   try {
@@ -20,9 +22,26 @@ function validarTokenVisual(token) {
   }
 }
 
-async function getData(itemId, token) {
+
+import { validarItemCompleto } from './helpers/validarItemCompleto.js';
+
+async function main() {
+  const estado = await verificarEstadoToken();
+  if (estado === 'expirado' || estado === 'por_expirar') {
+    console.warn('🚫 Token no válido. Abortando ejecución.');
+    return;
+  }
+
+  const token = await obtenerTokenExterno();
+  if (!token) {
+    console.error('❌ No se recibió token');
+    return;
+  }
+
+  console.log('✅ Token recibido:', token);
   validarTokenVisual(token);
 
+  const itemId = 'MLA1413050342'; // tu único ID por ahora
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
 
@@ -35,18 +54,19 @@ async function getData(itemId, token) {
     const item = await itemRes.json();
     const desc = await descRes.json();
 
-    console.log({
-      titulo: item.title,
-      precio: item.price,
-      moneda: item.currency_id,
-      ubicacion: item.seller_address?.city?.name,
-      descripcion: desc.plain_text,
-      imagenes: item.pictures?.map(p => p.url)
-    });
+    const datos = validarItemCompleto(item, desc);
+    if (!datos) {
+      console.warn('⛔ Item descartado por datos incompletos');
+      return;
+    }
+
+    console.log('✅ Item válido:', datos);
   } catch (err) {
     console.error('❌ Error al obtener datos:', err.message);
   }
 }
+
+
 
 async function main() {
   const estado = await verificarEstadoToken();
@@ -66,12 +86,12 @@ async function main() {
   await getData('MLA1413050342', token); // Reemplazá con el ID que necesites
 }
 
-main()
+ main()
   .then(() => {
-    console.log('⏹️ Worker finalizado correctamente');
-    process.exit(0);
+    console.log('⏹️ Worker finalizado, manteniendo proceso vivo');
+    setTimeout(() => {}, 1000 * 60 * 60); // espera 1 hora sin hacer nada
   })
   .catch((err) => {
     console.error('💥 Error inesperado en el worker:', err.message);
-    process.exit(1); // Salida con código de error
+    setTimeout(() => {}, 1000 * 60 * 60); // también espera 1 hora en caso de error
   });
