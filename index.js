@@ -37,12 +37,18 @@ async function main() {
   }
 
   const token = await obtenerTokenExterno();
+
+  console.log('🧪 Tipo de token:', typeof token);
+  console.log('🧪 Token crudo:', token);
+
+
   if (!token) {
     console.error('❌ No se recibió token');
     return;
   }
 
   console.log('✅ Token recibido:', token);
+
     
   validarTokenVisual(token);
 
