@@ -72,7 +72,15 @@ async function main() {
     const item = await itemRes.json();
     const desc = await descRes.json();
 
+    console.log('📝 Descripción recibida:', desc);
+
     const datos = validarItemCompleto(item, desc);
+
+    if (!desc || !desc.plain_text) {
+    console.warn('⚠️ Descripción faltante');
+    return null;
+    }
+
     if (!datos) {
       console.warn('⛔ Item descartado por datos incompletos');
       return;
