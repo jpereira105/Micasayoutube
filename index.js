@@ -6,6 +6,7 @@ dotenv.config();
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
 
+
 function validarTokenVisual(token) {
   if (!token || typeof token !== 'string') {
     console.error('⚠️ Token inválido: no es string');
@@ -87,9 +88,9 @@ async function main() {
  main()
   .then(() => {
     console.log('⏹️ Worker finalizado, manteniendo proceso vivo');
-    setTimeout(() => {}, 1000 * 60 * 60); // espera 1 hora sin hacer nada
+    // setTimeout(() => {}, 1000 * 60 * 60); // espera 1 hora sin hacer nada
   })
   .catch((err) => {
     console.error('💥 Error inesperado en el worker:', err.message);
-    setTimeout(() => {}, 1000 * 60 * 60); // también espera 1 hora en caso de error
+    // setTimeout(() => {}, 1000 * 60 * 60); // también espera 1 hora en caso de error
 });
