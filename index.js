@@ -70,11 +70,24 @@ async function main() {
     ]);
 
     const item = await itemRes.json();
-    const desc = await descRes.json();
 
-    console.log('📝 Descripción recibida:', desc);
+let desc = {};
+if (!descRes.ok) {
+  console.warn(`⚠️ No se pudo obtener descripción: ${descRes.status}`);
+  // Intentar obtener descripción desde atributos
+  const descripcionAlternativa = item.attributes?.find(attr =>
+    attr.name?.toLowerCase().includes('descripción') ||
+    attr.id?.toLowerCase().includes('description')
+  );
+  desc.plain_text = descripcionAlternativa?.value_name || ''; // o .value dependiendo del formato
+} else {
+  desc = await descRes.json();
+}
+
+
 
     const datos = validarItemCompleto(item, desc);
+
 
     if (!desc || !desc.plain_text) {
     console.warn('⚠️ Descripción faltante');
