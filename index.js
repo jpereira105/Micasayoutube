@@ -1,11 +1,10 @@
-// index.js  micasayoutube
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
-
+import { validarItemCompleto } from './helpers/validarItemCompleto.js';
 
 function validarTokenVisual(token) {
   if (!token || typeof token !== 'string') {
@@ -33,9 +32,6 @@ function validarTokenVisual(token) {
   }
 }
 
-
-import { validarItemCompleto } from './helpers/validarItemCompleto.js';
-
 async function main() {
   const estado = await verificarEstadoToken();
   if (estado === 'expirado' || estado === 'por_expirar') {
@@ -45,18 +41,12 @@ async function main() {
 
   const token = await obtenerTokenExterno();
 
-  console.log('🧪 Tipo de token:', typeof token);
-  console.log('🧪 Token crudo:', token);
-
-
   if (!token) {
     console.error('❌ No se recibió token');
     return;
   }
 
   console.log('✅ Token recibido:', token);
-
-    
   validarTokenVisual(token);
 
   const itemId = 'MLA1139118232';
@@ -70,67 +60,32 @@ async function main() {
     ]);
 
     const item = await itemRes.json();
+    let desc = {};
 
-let desc = {};
-if (!descRes.ok) {
-  console.warn(`⚠️ No se pudo obtener descripción: ${descRes.status}`);
-  // Intentar obtener descripción desde atributos
-  const descripcionAlternativa = item.attributes?.find(attr =>
-    attr.name?.toLowerCase().includes('descripción') ||
-    attr.id?.toLowerCase().includes('description')
-  );
-  desc.plain_text = descripcionAlternativa?.value_name || ''; // o .value dependiendo del formato
-} else {
-  desc = await descRes.json();
-}
-
-
+    if (!descRes.ok) {
+      console.warn(`⚠️ No se pudo obtener descripción: ${descRes.status}`);
+      const descripcionAlternativa = item.attributes?.find(attr =>
+        attr.name?.toLowerCase().includes('descripción') ||
+        attr.id?.toLowerCase().includes('description')
+      );
+      desc.plain_text = descripcionAlternativa?.value_name || '';
+    } else {
+      desc = await descRes.json();
+    }
 
     const datos = validarItemCompleto(item, desc);
-
-
-   function validarItemCompleto(item, desc) {
-  const descripcion = desc?.plain_text?.trim();
-
-  // Si no hay descripción, intentar extraer desde atributos
-  let descripcionFinal = descripcion;
-  if (!descripcionFinal) {
-    const alternativa = item.attributes?.find(attr =>
-      attr.name?.toLowerCase().includes('descripción') ||
-      attr.id?.toLowerCase().includes('description')
-    );
-    descripcionFinal = alternativa?.value_name || alternativa?.value || '';
+    console.log('📦 Datos validados:', datos);
+  } catch (err) {
+    console.error('💥 Error inesperado en el worker:', err.message);
   }
-
-  if (!descripcionFinal.trim()) {
-    console.warn('❌ Descripción no disponible');
-    return null; // o continuar si querés permitir ítems sin descripción
-  }
-
-  // Validar otros campos como título, precio, etc.
-  if (!item.title || !item.price || !item.currency_id || !item.seller_address || !item.pictures?.length) {
-    console.warn('⛔ Item incompleto. Faltan datos clave');
-    return null;
-  }
-
-  return {
-    id: item.id,
-    titulo: item.title,
-    precio: item.price,
-    moneda: item.currency_id,
-    ubicacion: item.seller_address.city.name,
-    descripcion: descripcionFinal,
-    imagenes: item.pictures.map(pic => pic.secure_url)
-  };
 }
 
-
- main()
+main()
   .then(() => {
     console.log('⏹️ Worker finalizado, manteniendo proceso vivo');
-    // setTimeout(() => {}, 1000 * 60 * 60); // espera 1 hora sin hacer nada
+    // setTimeout(() => {}, 1000 * 60 * 60);
   })
   .catch((err) => {
-    console.error('💥 Error inesperado en el worker:', err.message);
-    // setTimeout(() => {}, 1000 * 60 * 60); // también espera 1 hora en caso de error
-});
+    console.error('💥 Error en ejecución principal:', err.message);
+    // setTimeout(() => {}, 1000 * 60 * 60);
+  });

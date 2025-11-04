@@ -1,22 +1,36 @@
-// helpers/validarItemCompleto.js
+// validaritemCompleto
+
 export function validarItemCompleto(item, desc) {
-  const campos = {
-    titulo: item?.title,
-    precio: item?.price,
-    moneda: item?.currency_id,
-    ubicacion: item?.seller_address?.city?.name,
-    descripcion: desc?.plain_text,
-    imagenes: item?.pictures?.map(p => p.url)
-  };
+  const descripcion = desc?.plain_text?.trim();
 
-  const faltantes = Object.entries(campos)
-    .filter(([_, valor]) => !valor || (Array.isArray(valor) && valor.length === 0))
-    .map(([clave]) => clave);
+  // Si no hay descripción, intentar extraer desde atributos
+  let descripcionFinal = descripcion;
+  if (!descripcionFinal) {
+    const alternativa = item.attributes?.find(attr =>
+      attr.name?.toLowerCase().includes('descripción') ||
+      attr.id?.toLowerCase().includes('description')
+    );
+    descripcionFinal = alternativa?.value_name || alternativa?.value || '';
+  }
 
-  if (faltantes.length > 0) {
-    console.warn(`⚠️ Item incompleto. Faltan: ${faltantes.join(', ')}`);
+  if (!descripcionFinal.trim()) {
+    console.warn('❌ Descripción no disponible');
     return null;
   }
 
-  return campos;
+  // Validar otros campos clave
+  if (!item.title || !item.price || !item.currency_id || !item.seller_address || !item.pictures?.length) {
+    console.warn('⛔ Item incompleto. Faltan datos clave');
+    return null;
+  }
+
+  return {
+    id: item.id,
+    titulo: item.title,
+    precio: item.price,
+    moneda: item.currency_id,
+    ubicacion: item.seller_address.city.name,
+    descripcion: descripcionFinal,
+    imagenes: item.pictures.map(pic => pic.secure_url)
+  };
 }
