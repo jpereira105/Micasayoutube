@@ -56,7 +56,7 @@ async function main() {
   console.warn('🔒 Token no es JWT. Saltando validación visual.');
 }
 
-  const itemId = 'MLA1139118232';
+  const itemId = 'MLA1507461989';
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
 
