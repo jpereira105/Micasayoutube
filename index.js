@@ -12,16 +12,15 @@ function validarTokenVisual(token) {
     return;
   }
 
-  const partes = token.split('.');
-  if (partes.length < 3) {
-    console.warn('⚠️ Token no tiene formato JWT. Saltando validación visual.');
+  if (!token.includes('.')) {
+    console.warn('🔒 Token recibido no es JWT. Saltando validación visual.');
     return;
   }
 
+  // Si es JWT, continuar con la decodificación
   try {
+    const partes = token.split('.');
     const payload = JSON.parse(Buffer.from(partes[1], 'base64'));
-    console.log('Payload base64:', partes[1]);
-
     const exp = new Date(payload.exp * 1000);
     const ahora = new Date();
     const minutosRestantes = Math.floor((exp - ahora) / 60000);
@@ -33,6 +32,7 @@ function validarTokenVisual(token) {
     console.error('⚠️ No se pudo validar visualmente el token:', err.message);
   }
 }
+
 
 async function main() {
   const estado = await verificarEstadoToken();
@@ -49,7 +49,12 @@ async function main() {
   }
 
   console.log('✅ Token recibido:', token);
+
+  if (token.includes('.')) {
   validarTokenVisual(token);
+} else {
+  console.warn('🔒 Token no es JWT. Saltando validación visual.');
+}
 
   const itemId = 'MLA1139118232';
   const url = `https://api.mercadolibre.com/items/${itemId}`;
@@ -62,6 +67,7 @@ async function main() {
     ]);
 
     const item = await itemRes.json();
+    console.log('🧾 Item recibido:', JSON.stringify(item, null, 2));
     let desc = {};
 
     // 👇 Acá va tu chequeo de error 404
@@ -73,8 +79,9 @@ async function main() {
       console.warn(`⚠️ No se pudo obtener descripción: ${descRes.status}`);
       const descripcionAlternativa = item.attributes?.find(attr =>
         attr.name?.toLowerCase().includes('descripción') ||
-        attr.id?.toLowerCase().includes('description')
+        attr.id?.toLowerCase().includes('description')       
       );
+       console.log('🔍 Descripción alternativa:', descripcionAlternativa);
       desc.plain_text = descripcionAlternativa?.value_name || '';
     } else {
       desc = await descRes.json();
