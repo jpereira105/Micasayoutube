@@ -23,8 +23,16 @@ export async function obtenerTokenExterno() {
     if (!token || typeof token !== 'string' || token.length < 20) {
       console.error('⚠️ Token no disponible o inválido');
       console.log('🧪 Token recibido:', token);
+      console.log('🧪 Tipo:', typeof token);
+      console.log('🧪 Longitud:', token?.length || 0);
+      console.log('🧪 Contenido parcial:', token?.slice(0, 15) + '...');
       return null;
     }
+
+    if (token.split('.').length !== 3) {
+      console.warn('⚠️ Token recibido no parece JWT');
+    }
+
 
     // 🔍 Validación visual si es JWT
     if (token.includes('.')) {
