@@ -9,23 +9,24 @@ export async function obtenerTokenExterno() {
 
     // 🔍 Logs de trazabilidad antes del request
     console.log('🌐 Consultando endpoint...');
-    console.log('🔗 URL:', 'https://justo-scraper.onrender.com/api/token',);
+    console.log('🔗 URL:', 'https://micasayoutube.onrender.com/api/token',);
     console.log('🔑 API_KEY:', process.env.API_KEY_MERCADOLIBRE);
     // 🔍 Validación visual antes del request
     console.log('🔑 API_KEY usada para consumir:', process.env.API_KEY_MERCADOLIBRE);
     
-    const res = await axios.get('https://justo-scraper.onrender.com/api/token', {
+    const res = await axios.get('https://micasayoutube.onrender.com/api/token', {
       headers: {
         'x-api-key': process.env.API_KEY_MERCADOLIBRE
       },
       timeout: 5000
     });
-
-    if (!res.data?.token) {
-      console.error('⚠️ Token no disponible');
+    
+    if (!res.data?.token || typeof res.data.token !== 'string' || res.data.token.length < 20) {
+      console.error('⚠️ Token no disponible o inválido');
       console.log('🧪 Token recibido desde endpoint:', res.data.token);
       console.log('🧪 Tipo:', typeof res.data.token);
-      return null;
+      console.log('🧪 Longitud:', res.data.token?.length || 0);
+        return null;
     }
 
     return res.data.token;
