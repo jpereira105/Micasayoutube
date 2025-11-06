@@ -28,8 +28,9 @@ function validarTokenVisual(token) {
     const estado = minutosRestantes < 5 ? '🔴' : minutosRestantes < 30 ? '🟡' : '🟢';
     console.log(`${estado} Token expira en ${minutosRestantes} min`);
     console.log(`👤 Usuario asociado: ${payload.user_id || 'desconocido'}`);
+    console.log(`🔍 Scope del token: ${payload.scope || 'no especificado'}`);
   } catch (err) {
-    console.error('⚠️ No se pudo validar visualmente el token:', err.message);
+    console.warn('⚠️ No se pudo validar visualmente el token:', err.message);
   }
 }
 
@@ -60,8 +61,15 @@ async function main() {
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
 
+  if (!token.includes('.') || token.split('.').length !== 3) {
+    console.error('🚫 Token no tiene formato JWT. MercadoLibre requiere OAuth2 JWT válido.');
+    return;
+  }
+
+
   try {
     const [itemRes, descRes] = await Promise.all([
+      
       fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
       fetch(descUrl, { headers: { Authorization: `Bearer ${token}` } })
     ]);
