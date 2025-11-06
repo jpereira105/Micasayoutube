@@ -6,30 +6,40 @@ dotenv.config();
 
 export async function obtenerTokenExterno() {
   try {
-
-    // 🔍 Logs de trazabilidad antes del request
     console.log('🌐 Consultando endpoint...');
-    console.log('🔗 URL:', 'https://micasayoutube.onrender.com/api/token',);
-    console.log('🔑 API_KEY:', process.env.API_KEY_MERCADOLIBRE);
-    // 🔍 Validación visual antes del request
+    console.log('🔗 URL:', 'https://mercadolibretoken.onrender.com/api/token');
     console.log('🔑 API_KEY usada para consumir:', process.env.API_KEY_MERCADOLIBRE);
-    
-    const res = await axios.get('https://micasayoutube.onrender.com/api/token', {
+
+    const res = await axios.get('https://mercadolibretoken.onrender.com/api/token', {
       headers: {
         'x-api-key': process.env.API_KEY_MERCADOLIBRE
       },
       timeout: 5000
     });
-    
-    if (!res.data?.token || typeof res.data.token !== 'string' || res.data.token.length < 20) {
+
+    const token = res.data?.access_token;
+    const exp = res.data?.expires_at;
+
+    if (!token || typeof token !== 'string' || token.length < 20) {
       console.error('⚠️ Token no disponible o inválido');
-      console.log('🧪 Token recibido desde endpoint:', res.data.token);
-      console.log('🧪 Tipo:', typeof res.data.token);
-      console.log('🧪 Longitud:', res.data.token?.length || 0);
-        return null;
+      console.log('🧪 Token recibido:', token);
+      return null;
     }
 
-    return res.data.token;
+    // 🔍 Validación visual si es JWT
+    if (token.includes('.')) {
+      try {
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64'));
+        const minutosRestantes = Math.floor((exp - Date.now()) / 60000);
+        const estado = minutosRestantes < 5 ? '🔴' : minutosRestantes < 30 ? '🟡' : '🟢';
+        console.log(`${estado} Token expira en ${minutosRestantes} min`);
+        console.log(`👤 Usuario asociado: ${payload.user_id || res.data.user_id}`);
+      } catch (err) {
+        console.warn('⚠️ No se pudo decodificar el token:', err.message);
+      }
+    }
+
+    return token;
   } catch (err) {
     console.error('❌ Error al obtener token:', err.response?.data || err.message);
     return null;
