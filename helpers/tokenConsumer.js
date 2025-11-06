@@ -7,15 +7,15 @@ dotenv.config();
 export async function obtenerTokenExterno() {
   try {
     console.log('🌐 Consultando endpoint...');
-    console.log('🔗 URL:', 'https://https://justo-scraper.onrender.com/api/token');
+    console.log('🔗 URL:', 'https://mercadolibretoken.onrender.com/api/token');
     console.log('🔑 API_KEY usada para consumir:', process.env.API_KEY_MERCADOLIBRE);
 
-    const res = await axios.get('https://justo-scraper.onrender.com/api/token', {
-      headers: {
-        'x-api-key': process.env.API_KEY_MERCADOLIBRE
-      },
-      timeout: 5000
-    });
+    const res = await axios.get('https://mercadolibretoken.onrender.com/api/token', {
+  headers: {
+    'x-api-key': process.env.API_KEY_MERCADOLIBRE
+  },
+    timeout: 5000
+  });
 
     const token = res.data?.access_token;
     const exp = res.data?.expires_at;
