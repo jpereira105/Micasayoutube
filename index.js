@@ -2,7 +2,6 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
 import { validarItemCompleto } from './helpers/validarItemCompleto.js';
 import { guardarToken, cargarToken } from './helpers/tokenStore.js';
 import { obtenerTokenExterno, refrescarToken } from './helpers/tokenConsumer.js';
