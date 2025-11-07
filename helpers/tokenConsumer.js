@@ -3,25 +3,40 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export async function obtenerTokenExterno() {
+import axios from 'axios';
+
+export async function refrescarToken(refreshToken) {
   try {
-    const res = await axios.get('https://mercadolibretoken.onrender.com/api/token', {
-      headers: { 'x-api-key': process.env.API_KEY_MERCADOLIBRE },
-      timeout: 5000
+    const res = await axios.post('https://api.mercadolibre.com/oauth/token', new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: process.env.CLIENT_ID_ML,
+      client_secret: process.env.CLIENT_SECRET_ML,
+      refresh_token: refreshToken
+    }), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
-    const token = res.data?.access_token;
-    const refresh = res.data?.refresh_token;
-    const exp = res.data?.expires_at;
+    const nuevoToken = res.data?.access_token;
+    const nuevoRefresh = res.data?.refresh_token;
+    const expiresIn = res.data?.expires_in;
 
-    if (!token || typeof token !== 'string' || token.length < 20) {
-      console.error('⚠️ Token inválido');
+    if (!nuevoToken || !nuevoRefresh || !expiresIn) {
+      console.error('⚠️ Respuesta incompleta al refrescar token:', res.data);
       return null;
     }
 
-    return { access_token: token, refresh_token: refresh, expires_at: exp };
+    const expires_at = Date.now() + expiresIn * 1000;
+
+    console.log('🔄 Token refrescado correctamente');
+    console.log('🕒 Nuevo expires_at:', new Date(expires_at).toISOString());
+
+    return {
+      access_token: nuevoToken,
+      refresh_token: nuevoRefresh,
+      expires_at
+    };
   } catch (err) {
-    console.error('❌ Error al obtener token:', err.response?.data || err.message);
+    console.error('❌ Error al refrescar token:', err.response?.data || err.message);
     return null;
   }
 }
