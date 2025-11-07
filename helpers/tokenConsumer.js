@@ -3,8 +3,6 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import axios from 'axios';
-
 export async function refrescarToken(refreshToken) {
   try {
     const res = await axios.post('https://api.mercadolibre.com/oauth/token', new URLSearchParams({
