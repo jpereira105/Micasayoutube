@@ -56,19 +56,19 @@ async function main() {
   console.log(`⏳ Token expira en ${minutosRestantes} min`);
 
   if (minutosRestantes < 5 && refresh_token) {
-    console.warn('🔄 Token por expirar. Refrescando...');
-    const nuevo = await refrescarToken(refresh_token);
-    if (nuevo?.access_token) {
-      token = nuevo.access_token;
-      refresh_token = nuevo.refresh_token;
-      expires_at = nuevo.expires_at;
-      guardarToken(nuevo);
-      console.log('✅ Token actualizado y guardado');
-    } else {
-      console.error('🚫 Falló el refresco de token');
-      return;
-    }
+  console.warn('🔄 Token por expirar. Refrescando...');
+  const nuevo = await refrescarToken(refresh_token);
+  if (nuevo?.access_token) {
+    token = nuevo.access_token;
+    refresh_token = nuevo.refresh_token;
+    expires_at = nuevo.expires_at;
+    guardarToken(nuevo);
+    console.log('✅ Token actualizado y guardado');
+  } else {
+    console.error('🚫 Falló el refresco de token');
+    return;
   }
+}
 
   // Validación visual si es JWT
   if (token.includes('.') && token.split('.').length === 3) {
