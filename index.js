@@ -3,8 +3,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { obtenerTokenExterno } from './helpers/tokenConsumer.js';
-import { verificarEstadoToken } from './helpers/checkTokenStatus.js';
 import { validarItemCompleto } from './helpers/validarItemCompleto.js';
+import { guardarToken, cargarToken } from './helpers/tokenStore.js';
+import { obtenerTokenExterno, refrescarToken } from './helpers/tokenConsumer.js';
+
+
 
 function validarTokenVisual(token) {
   if (!token || typeof token !== 'string') {
@@ -36,40 +39,52 @@ function validarTokenVisual(token) {
 
 
 async function main() {
-  const estado = await verificarEstadoToken();
-  if (estado === 'expirado' || estado === 'por_expirar') {
-    console.warn('🚫 Token no válido. Abortando ejecución.');
-    return;
+  let tokenData = cargarToken();
+
+  if (!tokenData) {
+    console.warn('📭 No hay token guardado. Obteniendo nuevo...');
+    tokenData = await obtenerTokenExterno();
+    if (!tokenData) {
+      console.error('🚫 No se pudo obtener token externo');
+      return;
+    }
+    guardarToken(tokenData);
   }
 
-  const token = await obtenerTokenExterno();
+  let { access_token: token, refresh_token, expires_at } = tokenData;
 
-  if (!token) {
-    console.error('❌ No se recibió token');
-    return;
+  const minutosRestantes = Math.floor((expires_at - Date.now()) / 60000);
+  console.log(`⏳ Token expira en ${minutosRestantes} min`);
+
+  if (minutosRestantes < 5 && refresh_token) {
+    console.warn('🔄 Token por expirar. Refrescando...');
+    const nuevo = await refrescarToken(refresh_token);
+    if (nuevo?.access_token) {
+      token = nuevo.access_token;
+      refresh_token = nuevo.refresh_token;
+      expires_at = nuevo.expires_at;
+      guardarToken(nuevo);
+      console.log('✅ Token actualizado y guardado');
+    } else {
+      console.error('🚫 Falló el refresco de token');
+      return;
+    }
   }
 
-  console.log('✅ Token recibido:', token);
+  // Validación visual si es JWT
+  if (token.includes('.') && token.split('.').length === 3) {
+    validarTokenVisual(token);
+  } else {
+    console.warn('🔒 Token no es JWT. Saltando validación visual.');
+  }
 
-  if (token.includes('.')) {
-  validarTokenVisual(token);
-} else {
-  console.warn('🔒 Token no es JWT. Saltando validación visual.');
-}
-
+  // Consulta de item
   const itemId = 'MLA1507461989';
   const url = `https://api.mercadolibre.com/items/${itemId}`;
   const descUrl = `${url}/description`;
 
-  if (!token.includes('.') || token.split('.').length !== 3) {
-    console.error('🚫 Token no tiene formato JWT. MercadoLibre requiere OAuth2 JWT válido.');
-    return;
-  }
-
-
   try {
     const [itemRes, descRes] = await Promise.all([
-      
       fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
       fetch(descUrl, { headers: { Authorization: `Bearer ${token}` } })
     ]);
@@ -78,18 +93,17 @@ async function main() {
     console.log('🧾 Item recibido:', JSON.stringify(item, null, 2));
     let desc = {};
 
-    // 👇 Acá va tu chequeo de error 404
-  if (descRes.status === 404) {
-    console.warn('📭 Descripción no disponible (404)');
-  }
+    if (descRes.status === 404) {
+      console.warn('📭 Descripción no disponible (404)');
+    }
 
     if (!descRes.ok) {
       console.warn(`⚠️ No se pudo obtener descripción: ${descRes.status}`);
       const descripcionAlternativa = item.attributes?.find(attr =>
         attr.name?.toLowerCase().includes('descripción') ||
-        attr.id?.toLowerCase().includes('description')       
+        attr.id?.toLowerCase().includes('description')
       );
-       console.log('🔍 Descripción alternativa:', descripcionAlternativa);
+      console.log('🔍 Descripción alternativa:', descripcionAlternativa);
       desc.plain_text = descripcionAlternativa?.value_name || '';
     } else {
       desc = await descRes.json();
@@ -97,25 +111,16 @@ async function main() {
 
     const datos = validarItemCompleto(item, desc);
 
-    // 👇 Acá va tu chequeo
     if (!datos) {
       console.warn('Item incompleto. Faltan datos clave');
     } else {
       console.log('📦 Datos validados:', datos);
     }
-
-    console.log('📦 Datos validados:', datos);
   } catch (err) {
     console.error('💥 Error inesperado en el worker:', err.message);
   }
 }
 
 main()
-  .then(() => {
-    console.log('⏹️ Worker finalizado, manteniendo proceso vivo');
-    // setTimeout(() => {}, 1000 * 60 * 60);
-  })
-  .catch((err) => {
-    console.error('💥 Error en ejecución principal:', err.message);
-    // setTimeout(() => {}, 1000 * 60 * 60);
-  });
+  .then(() => console.log('⏹️ Worker finalizado, manteniendo proceso vivo'))
+  .catch((err) => console.error('💥 Error en ejecución principal:', err.message));
