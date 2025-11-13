@@ -39,24 +39,4 @@ export async function refrescarToken(refreshToken) {
   }
 }
 
-export async function refrescarToken(refreshToken) {
-  try {
-    const res = await axios.post('https://api.mercadolibre.com/oauth/token', new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: process.env.CLIENT_ID_ML,
-      client_secret: process.env.CLIENT_SECRET_ML,
-      refresh_token: refreshToken
-    }), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
 
-    return {
-      access_token: res.data.access_token,
-      refresh_token: res.data.refresh_token,
-      expires_at: Date.now() + res.data.expires_in * 1000
-    };
-  } catch (err) {
-    console.error('❌ Error al refrescar token:', err.response?.data || err.message);
-    return null;
-  }
-}
