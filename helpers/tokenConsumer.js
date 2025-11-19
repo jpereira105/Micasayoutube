@@ -1,3 +1,4 @@
+// helpers tokenConsumer.js
 import axios from 'axios';
 import dotenv from 'dotenv';
 import fs from 'fs';
@@ -25,7 +26,7 @@ export async function obtenerTokenDesdeServicio() {
     };
 
     fs.writeFileSync(ruta, JSON.stringify(tokenCompleto, null, 2));
-    console.log('✅ Token guardado en formato Mercado Libre + expires_at');
+    console.log(`✅ Token guardado en ${ruta} con expires_at`);
 
     return tokenCompleto;
   } catch (err) {
